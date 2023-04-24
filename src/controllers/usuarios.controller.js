@@ -3,7 +3,7 @@ import { getConnection } from "./../database/database.js";
 //Busqueda
 const getUsuarios = async (req, res) => {
     try {
-        const result = await getConnection.query("SELECT * FROM usuarios");
+        const [result] = await getConnection.query("SELECT * FROM usuarios");
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -14,7 +14,7 @@ const getUsuarios = async (req, res) => {
 const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await getConnection.query("SELECT * FROM usuarios WHERE idUsuario = ?", id);
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE idUsuario = ?", id);
         console.log(result);
         res.json(result);
     } catch (error) {
