@@ -2,12 +2,12 @@ import express from "express";
 import morgan from "morgan";
 //Routes
 import usuariosRoutes from "./routes/usuarios.routes";
-
+import {PORT} from "./config"
 
 const app = express();
 
 // Settings
-app.set("port",4000);
+app.set("port",PORT);
 
 // Middlewares
 app.use(morgan("dev"));
