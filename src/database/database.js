@@ -1,12 +1,19 @@
 import mysql from "promise-mysql";
-import config from "./../config.js";
+import {
+    DBPORT,
+    HOST,
+    DATABASE,
+    USER,
+    PASSWORD
+} from "./../config.js";
 
 const connection = mysql.createConnection({
-    dbport: config.dbport,
-    host: config.host,
-    database: config.database,
-    user: config.user,
-    password: config.password
+    
+    host: HOST,
+    user: USER,
+    password: PASSWORD,
+    port: DBPORT,
+    database: DATABASE
 });
 
 export const getConnection = () => {
