@@ -3,8 +3,7 @@ import { getConnection } from "./../database/database.js";
 //Busqueda
 const getUsuarios = async (req, res) => {
     try {
-        const connection = await getConnection();
-        const result = await connection.query("SELECT * FROM usuarios");
+        const result = await getConnection.query("SELECT * FROM usuarios");
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -15,8 +14,7 @@ const getUsuarios = async (req, res) => {
 const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const connection = await getConnection();
-        const result = await connection.query("SELECT * FROM usuarios WHERE idUsuario = ?", id);
+        const result = await getConnection.query("SELECT * FROM usuarios WHERE idUsuario = ?", id);
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -34,8 +32,7 @@ const addUsuarios = async (req, res) => {
         }
 
         const usuariosProps = { nombres, apellidos, usuario, contrasenia }
-        const connection = await getConnection();
-        await connection.query("INSERT INTO usuarios SET ?", usuariosProps);
+        await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
         res.json({message: "Usuario registrado"});
         
     } catch (error) {
@@ -55,8 +52,7 @@ const updateUsuario = async (req, res) => {
 
         const usuariosProps = { nombres, apellidos, usuario, contrasenia }
 
-        const connection = await getConnection();
-        const result = await connection.query("UPDATE usuarios SET ? WHERE idUsuario = ?", [usuariosProps,id]);
+        const result = await getConnection.query("UPDATE usuarios SET ? WHERE idUsuario = ?", [usuariosProps,id]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -68,8 +64,7 @@ const updateUsuario = async (req, res) => {
 const deleteUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const connection = await getConnection();
-        const result = await connection.query("DELETE FROM usuarios WHERE idUsuario = ? ", id);
+        const result = await getConnection.query("DELETE FROM usuarios WHERE idUsuario = ? ", id);
         console.log(result);
         res.json(result);
     } catch (error) {
