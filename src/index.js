@@ -1,10 +1,9 @@
-import app from "./app"
-
-
+import app from "./app.js"
+import { PORT } from "./config.js";
 
 const main = () => {
-    app.listen(app.get("port"));
-    console.log(`Servidor corriendo en el puerto ${app.get("port")}`);
+    app.listen(PORT);
+    console.log(`Servidor corriendo en el puerto`, PORT);
 };
 
 main();

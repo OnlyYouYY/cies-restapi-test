@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 
 //Busqueda
 const getUsuarios = async (req, res) => {
@@ -76,6 +76,7 @@ const deleteUsuario = async (req, res) => {
         res.status(500).send(error.message);
     }
 }
+
 
 export const methods = {
     getUsuarios,

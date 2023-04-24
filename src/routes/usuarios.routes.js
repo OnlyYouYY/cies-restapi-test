@@ -1,5 +1,5 @@
 import {Router, request} from "express";
-import {methods as usuarioController} from "./../controllers/usuarios.controller";
+import {methods as usuarioController} from "./../controllers/usuarios.controller.js";
 
 const router = Router();
 //Busquedas
