@@ -2,7 +2,7 @@ import mysql from "promise-mysql";
 import config from "./../config.js";
 
 const connection = mysql.createConnection({
-    port: config.dbport,
+    dbport: config.dbport,
     host: config.host,
     database: config.database,
     user: config.user,
