@@ -32,8 +32,8 @@ const addUsuarios = async (req, res) => {
         }
 
         const usuariosProps = { nombres, apellidos, usuario, contrasenia }
-        await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
-        res.json({message: "Usuario registrado"});
+        const [result] = await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
+        res.json(result);
         
     } catch (error) {
         res.status(500).send(error.message);
@@ -52,7 +52,7 @@ const updateUsuario = async (req, res) => {
 
         const usuariosProps = { nombres, apellidos, usuario, contrasenia }
 
-        const result = await getConnection.query("UPDATE usuarios SET ? WHERE idUsuario = ?", [usuariosProps,id]);
+        const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE idUsuario = ?", [usuariosProps,id]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -64,7 +64,7 @@ const updateUsuario = async (req, res) => {
 const deleteUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await getConnection.query("DELETE FROM usuarios WHERE idUsuario = ? ", id);
+        const [result] = await getConnection.query("DELETE FROM usuarios WHERE idUsuario = ? ", id);
         console.log(result);
         res.json(result);
     } catch (error) {
