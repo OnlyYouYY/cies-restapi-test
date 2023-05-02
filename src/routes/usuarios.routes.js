@@ -15,4 +15,7 @@ router.delete("/:id", usuarioController.deleteUsuario);
 //Actualizaciones
 router.put("/:id", usuarioController.updateUsuario);
 
+//Login
+router.post("/login", usuarioController.loginUser);
+
 export default router;
