@@ -4,13 +4,13 @@ import {
     DBPORT,
     HOST,
     DATABASE,
-    USER,
+    DBUSER,
     PASSWORD
 } from "./../config.js";
 
 export const getConnection = createPool({
     host: HOST,
-    user: USER,
+    user: DBUSER,
     password: PASSWORD,
     port: DBPORT,
     database: DATABASE
