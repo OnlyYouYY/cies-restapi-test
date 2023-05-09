@@ -7,10 +7,10 @@ router.get("/", usuarioController.getUsuarios);
 router.get("/:id", usuarioController.getUsuario);
 
 //Inserciones
-router.post("/", usuarioController.addUsuarios);
+router.post("/registrar", usuarioController.addUsuarios);
 
 //Eliminacion
-router.delete("/:id", usuarioController.deleteUsuario);
+router.put("/delete/:id", usuarioController.deleteUsuario);
 
 //Actualizaciones
 router.put("/:id", usuarioController.updateUsuario);

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 const generateToken = (userId) => {
     const token = jwt.sign({ id: userId }, 'secretKey', { expiresIn: '1h' });
     return token;
-  }
+}
 
 //Busqueda
 const getUsuarios = async (req, res) => {
@@ -20,7 +20,7 @@ const getUsuarios = async (req, res) => {
 const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE id_usuario = ?", id);
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE id = ?", id);
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -32,10 +32,11 @@ const getUsuario = async (req, res) => {
 const loginUser = async (req, res) => {
     const { username, password } = req.body;
     try {
-        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE correo = ? AND contrasenia = ?",[username, password]);
+        const estado = true;
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE correo = ? AND contrasenia = ? AND estado = ?", [username, password, estado]);
         if (result.length > 0) {
             const token = generateToken(result[0].id);
-            res.status(200).json({ token,result });
+            res.status(200).json({ token, result });
         } else {
             res.status(401).json({ message: "Correo o contraseña incorrectos" });
         }
@@ -55,7 +56,7 @@ const addUsuarios = async (req, res) => {
             res.status(400).json({ message: "Porfavor llena todos los campos" });
         }
 
-        const usuariosProps = { nombre, apellido, correo, contrasenia, rol }
+        const usuariosProps = { nombre, apellido, correo, contrasenia, rol, 'estado': true }
         const [result] = await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
         res.json(result);
 
@@ -74,9 +75,10 @@ const updateUsuario = async (req, res) => {
             res.status(400).json({ message: "Porfavor llena todos los campos" });
         }
 
-        const usuariosProps = { nombre, apellido, correo, contrasenia, rol }
+        const usuariosProps = { nombre, apellido, correo, contrasenia, rol, 'estado': true }
 
-        const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE id_usuario = ?", [usuariosProps, id]);
+        const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE id = ?", [usuariosProps, id]);
+        
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -88,7 +90,8 @@ const updateUsuario = async (req, res) => {
 const deleteUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const [result] = await getConnection.query("DELETE FROM usuarios WHERE id_usuario = ? ", id);
+        const estado = false;
+        const [result] = await getConnection.query("UPDATE usuarios SET estado = ? WHERE id = ? ", [estado, id]);
         console.log(result);
         res.json(result);
     } catch (error) {
