@@ -4,7 +4,7 @@ import {methods as pacientesController} from "./../controllers/pacientes.control
 const router = Router();
 
 //Busqueda paciente
-router.get("/pacientes/:id/:nombre", pacientesController.getPaciente);
+router.get("/pacientes/:id", pacientesController.getPaciente);
 
 
 export default router;
