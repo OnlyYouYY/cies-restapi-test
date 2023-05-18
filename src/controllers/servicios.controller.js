@@ -4,7 +4,7 @@ import { getConnection } from "./../database/database.js";
 const getServicios = async (req, res) => {
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT * FROM servicios WHERE estado = ?",estado);
+        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? ORDER BY s.fecha_creacion DESC;",estado);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -59,7 +59,7 @@ const updateServicio = async (req, res) => {
     try {
         const {id} = req.params;
         const {nombre_servicio , descripcion_servicio, precio, id_categoria} = req.body;
-        const {serviciosProps} = {nombre_servicio , descripcion_servicio, precio, id_categoria, 'estado_servicio': 'Pendiente', 'estado': true };
+        const serviciosProps = {nombre_servicio , descripcion_servicio, precio, id_categoria};
         const [result] = await getConnection.query("UPDATE servicios SET ? WHERE id = ?", [serviciosProps, id]);
         res.json(result);
     }
