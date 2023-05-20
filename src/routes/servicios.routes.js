@@ -12,11 +12,11 @@ router.post("/registrar", serviciosController.addServicio);
 router.post("/registrarServicios", serviciosController.addServicios);
 
 //Actualizar
-router.put("/actualizar/:id" , serviciosController.updateServicio);
+router.put("/actualizar/:id",serviciosController.updateServicio);
 router.put("/estado/:id", serviciosController.estadoServicio);
 
 //Eliminar
-router.put("/eliminar", serviciosController.deleteServicio);
+router.put("/eliminar/:id", serviciosController.deleteServicio);
 router.put("/eliminarServicios", serviciosController.deleteServicios);
 
 
