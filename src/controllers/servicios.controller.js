@@ -1,22 +1,23 @@
 import { getConnection } from "./../database/database.js";
+import { uploadImageToStorage } from "../service/googleCloud.js";
 
 
 const getServicios = async (req, res) => {
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? ORDER BY s.fecha_creacion DESC;",estado);
+        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? ORDER BY s.fecha_creacion DESC;", estado);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
     }
 }
 
-const listarCategorias = async (req,res) => {
+const listarCategorias = async (req, res) => {
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT * FROM categoria_servicios WHERE estado = ?",estado);
+        const [result] = await getConnection.query("SELECT id,nombre_categoria FROM categoria_servicios WHERE estado = ?", estado);
         res.json(result);
-    } catch (error){
+    } catch (error) {
         res.status(500).send(error.message);
     }
 }
@@ -25,7 +26,9 @@ const addServicio = async (req, res) => {
     try {
         const { nombre_servicio, descripcion_servicio, precio, id_categoria } = req.body;
 
-        const serviciosProps = { nombre_servicio, descripcion_servicio, precio, id_categoria, 'estado_servicio': 'Pendiente', 'estado': true };
+        const imageUrl = await uploadImageToStorage(req.file);
+
+        const serviciosProps = { nombre_servicio, descripcion_servicio, precio, id_categoria,ruta_imagen:imageUrl, 'estado_servicio': 'Pendiente', 'estado': true };
         const [result] = await getConnection.query("INSERT INTO servicios SET ?", serviciosProps);
         res.json(result);
     }
@@ -57,25 +60,25 @@ const addServicios = async (req, res) => {
 
 const updateServicio = async (req, res) => {
     try {
-        const {id} = req.params;
-        const {nombre_servicio , descripcion_servicio, precio, id_categoria} = req.body;
-        const serviciosProps = {nombre_servicio , descripcion_servicio, precio, id_categoria};
+        const { id } = req.params;
+        const { nombre_servicio, descripcion_servicio, precio, id_categoria } = req.body;
+        const serviciosProps = { nombre_servicio, descripcion_servicio, precio, id_categoria };
         const [result] = await getConnection.query("UPDATE servicios SET ? WHERE id = ?", [serviciosProps, id]);
         res.json(result);
     }
-    catch(error){
+    catch (error) {
         res.status(500).send(error.message);
     }
 }
 
-const estadoServicio = async (req,res) => {
+const estadoServicio = async (req, res) => {
     try {
-        const {id} = req.params;
-        const {estado_servicio} = req.body;
-        const [result] = await getConnection.query("UPDATE servicios SET estado_servicio = ? WHERE id = ?",[estado_servicio,id]);
+        const { id } = req.params;
+        const { estado_servicio } = req.body;
+        const [result] = await getConnection.query("UPDATE servicios SET estado_servicio = ? WHERE id = ?", [estado_servicio, id]);
         res.json(result);
     }
-    catch(error){
+    catch (error) {
         res.status(500).send(error.message);
     }
 }
@@ -83,14 +86,14 @@ const estadoServicio = async (req,res) => {
 const deleteServicio = async (req, res) => {
 
     try {
-        const {id} = req.params;
+        const { id } = req.params;
         const estado = false;
-        const [result] = await getConnection.query("UPDATE servicios SET estado = ? WHERE id = ?", [estado,id]);
+        const [result] = await getConnection.query("UPDATE servicios SET estado = ? WHERE id = ?", [estado, id]);
         res.json(result);
     }
-    catch(error){
+    catch (error) {
         res.status(500).send(error.message);
-    } 
+    }
 }
 
 const deleteServicios = async (req, res) => {
@@ -103,7 +106,7 @@ const deleteServicios = async (req, res) => {
         }
         const sql = "UPDATE servicios SET estado = ? WHERE id IN (?)";
         const [result] = await getConnection.query(sql, [estado, ids]);
-        
+
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);

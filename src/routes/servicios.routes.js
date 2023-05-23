@@ -1,5 +1,6 @@
-import {Router, request} from "express";
-import {methods as serviciosController} from "./../controllers/servicios.controller.js";
+import { Router, request } from "express";
+import { methods as serviciosController } from "./../controllers/servicios.controller.js";
+import { multerUpload } from "../service/googleCloud.js";
 
 const router = Router();
 
@@ -8,11 +9,11 @@ router.get("/", serviciosController.getServicios);
 router.get("/categorias", serviciosController.listarCategorias);
 
 //Insercion
-router.post("/registrar", serviciosController.addServicio);
+router.post("/registrar", multerUpload.single('imagen'), serviciosController.addServicio);
 router.post("/registrarServicios", serviciosController.addServicios);
 
 //Actualizar
-router.put("/actualizar/:id",serviciosController.updateServicio);
+router.put("/actualizar/:id", serviciosController.updateServicio);
 router.put("/estado/:id", serviciosController.estadoServicio);
 
 //Eliminar
