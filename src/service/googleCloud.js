@@ -41,7 +41,7 @@ export const uploadImageToStorage = async (file) => {
       });
   
       uploadTask.on('finish', () => {
-        const imageUrl = `https://storage.cloud.google.com/${bucketName}/${folderName}/${uniqueFileName}`;
+        const imageUrl = `https://storage.googleapis.com/${bucketName}/${folderName}/${uniqueFileName}`;
         resolve(imageUrl);
       });
   
