@@ -19,9 +19,9 @@ const storage = new Storage({
 });
 
 
-export const uploadImageToStorage = async (file) => {
+export const uploadImageToStorage = async (file, folder) => {
     const bucketName = 'cies-app';
-    const folderName = 'servicios';
+    const folderName = `${folder}`;
     const bucket = storage.bucket(bucketName);
   
     const uniqueFileName = `${Date.now()}-${file.originalname}`;

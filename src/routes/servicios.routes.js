@@ -6,19 +6,24 @@ const router = Router();
 
 //Listar
 router.get("/", serviciosController.getServicios);
+router.get("/servicios/:id_categoria", serviciosController.getServiciosID);
 router.get("/categorias", serviciosController.listarCategorias);
 
 //Insercion
 router.post("/registrar", multerUpload.single('imagen'), serviciosController.addServicio);
-router.post("/registrarServicios", serviciosController.addServicios);
+router.post("/registrarCategoria", multerUpload.single('imagenCategoria'), serviciosController.addCategoria);
+
 
 //Actualizar
 router.put("/actualizar/:id", serviciosController.updateServicio);
+router.put("/actualizarCategoria/:id", serviciosController.updateCategoria);
 router.put("/estado/:id", serviciosController.estadoServicio);
 
 //Eliminar
 router.put("/eliminar/:id", serviciosController.deleteServicio);
 router.put("/eliminarServicios", serviciosController.deleteServicios);
+router.put("/eliminarCategoria/:id", serviciosController.deleteCategoria);
+router.put("/eliminarCategorias", serviciosController.deleteCategorias);
 
 
 export default router;

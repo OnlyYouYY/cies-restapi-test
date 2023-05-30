@@ -12,10 +12,21 @@ const getServicios = async (req, res) => {
     }
 }
 
+const getServiciosID = async (req, res) => {
+    try {
+        const { id_categoria } = req.params;
+        const estado = true;
+        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? AND s.id_categoria = ? ORDER BY s.fecha_creacion DESC;", [estado,id_categoria]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 const listarCategorias = async (req, res) => {
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT id,nombre_categoria FROM categoria_servicios WHERE estado = ?", estado);
+        const [result] = await getConnection.query("SELECT * FROM categoria_servicios WHERE estado = ?", estado);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -24,11 +35,26 @@ const listarCategorias = async (req, res) => {
 
 const addServicio = async (req, res) => {
     try {
-        const { nombre_servicio, descripcion_servicio, precio, id_categoria } = req.body;
+        const { nombre_servicio, descripcion_servicio, id_categoria } = req.body;
 
-        const imageUrl = await uploadImageToStorage(req.file);
+        const folder = 'servicios'
+        const imageUrl = await uploadImageToStorage(req.file, folder);
 
-        const serviciosProps = { nombre_servicio, descripcion_servicio, precio, id_categoria,ruta_imagen:imageUrl, 'estado_servicio': 'Pendiente', 'estado': true };
+        const [lastCodeResult] = await getConnection.query('SELECT codigo FROM servicios ORDER BY codigo DESC LIMIT 1');
+
+        let newCode = 'SER-001';
+
+        if (lastCodeResult.length > 0) {
+
+            let lastCode = lastCodeResult[0].codigo;
+            let lastNumber = parseInt(lastCode.replace('SER-', ''));
+            let newNumber = lastNumber + 1;
+
+            let formattedNumber = ("000" + newNumber).slice(-3);
+            newCode = 'SER-' + formattedNumber;
+        }
+
+        const serviciosProps = { codigo: newCode, nombre_servicio, descripcion_servicio, id_categoria, ruta_imagen: imageUrl, 'estado_servicio': 'Pendiente', 'estado': true };
         const [result] = await getConnection.query("INSERT INTO servicios SET ?", serviciosProps);
         res.json(result);
     }
@@ -37,33 +63,63 @@ const addServicio = async (req, res) => {
     }
 }
 
-const addServicios = async (req, res) => {
+const addCategoria = async (req, res) => {
     try {
-        const servicios = req.body;
+        const { nombre_categoria, descripcion_categoria } = req.body;
 
-        if (!servicios || !Array.isArray(servicios) || servicios.length === 0) {
-            return res.status(400).json({ error: "Servicios inválidos" });
+        const folder = 'categoria_servicio'
+        const imageUrlCategoria = await uploadImageToStorage(req.file, folder);
+
+        const [lastCodeResult] = await getConnection.query('SELECT codigo FROM categoria_servicios ORDER BY codigo DESC LIMIT 1');
+
+        let newCode = 'CAT-001';
+
+        if (lastCodeResult.length > 0) {
+
+            let lastCode = lastCodeResult[0].codigo;
+            let lastNumber = parseInt(lastCode.replace('CAT-', ''));
+            let newNumber = lastNumber + 1;
+
+            let formattedNumber = ("000" + newNumber).slice(-3);
+            newCode = 'CAT-' + formattedNumber;
         }
 
-        const serviciosValues = servicios.map(servicio => {
-            return [servicio.nombre_servicio, servicio.descripcion_servicio, servicio.precio, servicio.id_categoria, 'Pendiente', true];
-        });
-
-        const sql = "INSERT INTO servicios (nombre_servicio, descripcion_servicio, precio, id_categoria, estado_servicio, estado) VALUES ?";
-        const [result] = await getConnection.query(sql, [serviciosValues]);
+        const categoriaProps = {
+            codigo: newCode,
+            nombre_categoria,
+            descripcion_categoria,
+            ruta_imagen: imageUrlCategoria,
+            'estado': true
+        };
+        const [result] = await getConnection.query("INSERT INTO categoria_servicios SET ?", categoriaProps);
         res.json(result);
-    } catch (error) {
+    }
+    catch (error) {
         res.status(500).send(error.message);
     }
 }
 
 
+
 const updateServicio = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre_servicio, descripcion_servicio, precio, id_categoria } = req.body;
-        const serviciosProps = { nombre_servicio, descripcion_servicio, precio, id_categoria };
+        const { nombre_servicio, descripcion_servicio, id_categoria } = req.body;
+        const serviciosProps = { nombre_servicio, descripcion_servicio, id_categoria };
         const [result] = await getConnection.query("UPDATE servicios SET ? WHERE id = ?", [serviciosProps, id]);
+        res.json(result);
+    }
+    catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const updateCategoria = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre_categoria, descripcion_categoria } = req.body;
+        const categoriaProps = { nombre_categoria, descripcion_categoria };
+        const [result] = await getConnection.query("UPDATE categoria_servicios SET ? WHERE id = ?", [categoriaProps, id]);
         res.json(result);
     }
     catch (error) {
@@ -96,6 +152,19 @@ const deleteServicio = async (req, res) => {
     }
 }
 
+const deleteCategoria = async (req, res) => {
+
+    try {
+        const { id } = req.params;
+        const estado = false;
+        const [result] = await getConnection.query("UPDATE categoria_servicios SET estado = ? WHERE id = ?", [estado, id]);
+        res.json(result);
+    }
+    catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 const deleteServicios = async (req, res) => {
     try {
         const { ids } = req.body;
@@ -113,14 +182,35 @@ const deleteServicios = async (req, res) => {
     }
 }
 
+const deleteCategorias = async (req, res) => {
+    try {
+        const { ids } = req.body;
+        const estado = false;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: "IDs inválidos" });
+        }
+        const sql = "UPDATE categoria_servicios SET estado = ? WHERE id IN (?)";
+        const [result] = await getConnection.query(sql, [estado, ids]);
+
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 
 export const methods = {
     getServicios,
     addServicio,
-    addServicios,
+    addCategoria,
     listarCategorias,
     updateServicio,
     estadoServicio,
     deleteServicio,
-    deleteServicios
+    deleteServicios,
+    updateCategoria,
+    deleteCategoria,
+    deleteCategorias,
+    getServiciosID
 }
