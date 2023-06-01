@@ -4,6 +4,8 @@ import { multerUpload } from "../service/googleCloud.js";
 
 const router = Router();
 
+router.get("/pacientes", serviciosController.getPacientes);
+
 //Listar
 router.get("/", serviciosController.getServicios);
 router.get("/servicios/:id_categoria", serviciosController.getServiciosID);

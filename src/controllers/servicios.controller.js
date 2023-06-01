@@ -2,6 +2,17 @@ import { getConnection } from "./../database/database.js";
 import { uploadImageToStorage } from "../service/googleCloud.js";
 
 
+
+const getPacientes = async (req, res) => {
+    try {
+        const estado = true;
+        const [result] = await getConnection.query("SELECT * FROM pacientes WHERE estado = ?", estado);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 const getServicios = async (req, res) => {
     try {
         const estado = true;
@@ -236,5 +247,6 @@ export const methods = {
     deleteCategorias,
     getServiciosID,
     getServiciosIDmedico,
-    getMedicosID
+    getMedicosID,
+    getPacientes
 }
