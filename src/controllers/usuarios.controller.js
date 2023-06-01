@@ -71,7 +71,7 @@ const updateUsuario = async (req, res) => {
         const { id } = req.params;
         const { nombres, apellidos, correo, contrasenia, rol } = req.body;
 
-        const usuariosProps = { nombre, apellido, correo, contrasenia, rol, 'estado': true }
+        const usuariosProps = { nombres, apellidos, correo, contrasenia, rol, 'estado': true }
 
         const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE id = ?", [usuariosProps, id]);
         
