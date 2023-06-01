@@ -54,13 +54,13 @@ const loginUser = async (req, res) => {
 //Insercion
 const addUsuarios = async (req, res) => {
     try {
-        const { nombre, apellido, correo, contrasenia, rol } = req.body;
+        const { nombres, apellidos, correo, contrasenia, rol } = req.body;
 
         if (nombre === undefined || apellido === undefined || correo === undefined || contrasenia === undefined || rol === undefined) {
             res.status(400).json({ message: "Porfavor llena todos los campos" });
         }
 
-        const usuariosProps = { nombre, apellido, correo, contrasenia, rol, 'estado': true }
+        const usuariosProps = { nombres, apellidos, correo, contrasenia, rol, 'estado': true }
         const [result] = await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
         res.json(result);
 
