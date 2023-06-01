@@ -23,6 +23,28 @@ const getServiciosID = async (req, res) => {
     }
 }
 
+const getMedicosID = async (req, res) => {
+    try {
+        const { id_servicio } = req.params;
+        const estado = true;
+        const [result] = await getConnection.query("SELECT m.id,m.id_usuario,m.id_servicio, s.nombre_servicio, u.nombres, u.apellidos FROM medicos m INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = ? AND m.id_servicio = ? ORDER BY m.id_usuario DESC;", [estado,id_servicio]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getServiciosIDmedico = async (req, res) => {
+    try {
+        const { id_medico } = req.params;
+        const estado = true;
+        const [result] = await getConnection.query("SELECT m.id, h.fichas_disponibles, h.dia_semana, h.hora_inicio, h.hora_final,m.especialidad, u.nombres,u.apellidos,u.correo,u.rol, s.codigo,s.nombre_servicio FROM horarios_medicos h INNER JOIN medicos m ON h.id_medico = m.id INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = ? AND h.id_medico = ? ORDER BY h.dia_semana ASC", [estado,id_medico]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 const listarCategorias = async (req, res) => {
     try {
         const estado = true;
@@ -212,5 +234,7 @@ export const methods = {
     updateCategoria,
     deleteCategoria,
     deleteCategorias,
-    getServiciosID
+    getServiciosID,
+    getServiciosIDmedico,
+    getMedicosID
 }

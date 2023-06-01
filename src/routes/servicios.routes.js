@@ -7,6 +7,8 @@ const router = Router();
 //Listar
 router.get("/", serviciosController.getServicios);
 router.get("/servicios/:id_categoria", serviciosController.getServiciosID);
+router.get("/medicos/:id_servicio", serviciosController.getMedicosID);
+router.get("/serviciosMedico/:id_medico", serviciosController.getServiciosIDmedico);
 router.get("/categorias", serviciosController.listarCategorias);
 
 //Insercion
