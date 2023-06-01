@@ -73,7 +73,7 @@ const addUsuarios = async (req, res) => {
 const updateUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, apellido, correo, contrasenia, rol } = req.body;
+        const { nombres, apellidos, correo, contrasenia, rol } = req.body;
 
         const usuariosProps = { nombre, apellido, correo, contrasenia, rol, 'estado': true }
 
