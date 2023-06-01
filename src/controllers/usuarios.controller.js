@@ -9,7 +9,8 @@ const generateToken = (userId) => {
 //Busqueda
 const getUsuarios = async (req, res) => {
     try {
-        const [result] = await getConnection.query("SELECT * FROM usuarios");
+        const estado = true;
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE  estado = ? ", estado);
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -17,6 +18,8 @@ const getUsuarios = async (req, res) => {
     }
 }
 
+
+//Buscar un usuario a traves de su id
 const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
@@ -27,8 +30,9 @@ const getUsuario = async (req, res) => {
         res.status(500).send(error.message);
     }
 }
-//Login
 
+
+//Login
 const loginUser = async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -71,10 +75,6 @@ const updateUsuario = async (req, res) => {
         const { id } = req.params;
         const { nombre, apellido, correo, contrasenia, rol } = req.body;
 
-        if (id === undefined || nombre === undefined || apellido === undefined || correo === undefined || contrasenia === undefined || rol === undefined) {
-            res.status(400).json({ message: "Porfavor llena todos los campos" });
-        }
-
         const usuariosProps = { nombre, apellido, correo, contrasenia, rol, 'estado': true }
 
         const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE id = ?", [usuariosProps, id]);
@@ -99,6 +99,26 @@ const deleteUsuario = async (req, res) => {
     }
 }
 
+export const validarUsuarioExistente = async (req, res) => {
+    const { correo, contrasenia } = req.body;
+  
+    try {
+      const usuarioExistente = await Usuario.findOne({
+        correo,
+        contrasenia,
+      });
+  
+      if (usuarioExistente) {
+        return res.status(200).json({ existente: true });
+      } else {
+        return res.status(200).json({ existente: false });
+      }
+    } catch (error) {
+      return res.status(500).json({ error: "Error al verificar usuario existente" });
+    }
+  };
+
+
 
 export const methods = {
     getUsuarios,
@@ -106,5 +126,6 @@ export const methods = {
     addUsuarios,
     deleteUsuario,
     updateUsuario,
-    loginUser
+    loginUser,
+    validarUsuarioExistente
 }

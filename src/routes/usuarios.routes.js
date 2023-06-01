@@ -13,9 +13,12 @@ router.post("/registrar", usuarioController.addUsuarios);
 router.put("/delete/:id", usuarioController.deleteUsuario);
 
 //Actualizaciones
-router.put("/:id", usuarioController.updateUsuario);
+router.put("/actualizar/:id", usuarioController.updateUsuario);
 
 //Login
 router.post("/login", usuarioController.loginUser);
+
+
+
 
 export default router;
