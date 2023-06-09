@@ -5,6 +5,7 @@ import { multerUpload } from "../service/googleCloud.js";
 const router = Router();
 
 router.get("/pacientes", serviciosController.getPacientes);
+router.get("/pacienteID/:id", serviciosController.getPacienteID);
 
 //Listar
 router.get("/", serviciosController.getServicios);
@@ -28,6 +29,14 @@ router.put("/eliminar/:id", serviciosController.deleteServicio);
 router.put("/eliminarServicios", serviciosController.deleteServicios);
 router.put("/eliminarCategoria/:id", serviciosController.deleteCategoria);
 router.put("/eliminarCategorias", serviciosController.deleteCategorias);
+
+
+//Listar Fichas
+router.get("/fichas/:fecha", serviciosController.getFichas);
+//Insercion fichas
+router.post("/registrarFicha", serviciosController.addFicha);
+//Cancelar ficha
+router.put("/cancelarFicha/:id", serviciosController.cancelarFicha);
 
 
 export default router;

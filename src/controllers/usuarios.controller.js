@@ -1,5 +1,8 @@
 import { getConnection } from "./../database/database.js";
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+const saltRounds = 10;
 
 const generateToken = (userId) => {
     const token = jwt.sign({ id: userId }, 'secretKey', { expiresIn: '1h' });
@@ -37,10 +40,17 @@ const loginUser = async (req, res) => {
     const { username, password } = req.body;
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE correo = ? AND contrasenia = ? AND estado = ?", [username, password, estado]);
-        if (result.length > 0) {
-            const token = generateToken(result[0].id);
-            res.status(200).json({ token, result });
+
+        const [usuario] = await getConnection.query("SELECT * FROM usuarios WHERE correo = ? AND estado = ?", [username, estado]);
+        if (usuario.length > 0) {
+
+            const match = await bcrypt.compare(password, usuario[0].contrasenia);
+            if (match) {
+                const token = generateToken(usuario[0].id);
+                res.status(200).json({ token, usuario });
+            } else {
+                res.status(401).json({ message: "Correo o contraseña incorrectos" });
+            }
         } else {
             res.status(401).json({ message: "Correo o contraseña incorrectos" });
         }
@@ -56,7 +66,9 @@ const addUsuarios = async (req, res) => {
     try {
         const { nombres, apellidos, correo, contrasenia, rol } = req.body;
 
-        const usuariosProps = { nombres, apellidos, correo, contrasenia, rol, 'estado': true }
+        const hashedContrasenia = await bcrypt.hash(contrasenia, saltRounds);
+
+        const usuariosProps = { nombres, apellidos, correo, contrasenia: hashedContrasenia, rol, 'estado': true }
         const [result] = await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
         res.json(result);
 

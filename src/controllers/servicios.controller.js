@@ -27,7 +27,7 @@ const getServiciosID = async (req, res) => {
     try {
         const { id_categoria } = req.params;
         const estado = true;
-        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? AND s.id_categoria = ? ORDER BY s.fecha_creacion DESC;", [estado,id_categoria]);
+        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? AND s.id_categoria = ? ORDER BY s.fecha_creacion DESC;", [estado, id_categoria]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -38,7 +38,7 @@ const getMedicosID = async (req, res) => {
     try {
         const { id_servicio } = req.params;
         const estado = true;
-        const [result] = await getConnection.query("SELECT m.id,m.id_usuario,m.id_servicio, s.nombre_servicio, u.nombres, u.apellidos FROM medicos m INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = ? AND m.id_servicio = ? ORDER BY m.id_usuario DESC;", [estado,id_servicio]);
+        const [result] = await getConnection.query("SELECT m.id,m.id_usuario,m.id_servicio, s.nombre_servicio, u.nombres, u.apellidos FROM medicos m INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = ? AND m.id_servicio = ? ORDER BY m.id_usuario DESC;", [estado, id_servicio]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -49,7 +49,7 @@ const getServiciosIDmedico = async (req, res) => {
     try {
         const { id_medico } = req.params;
         const estado = true;
-        const [result] = await getConnection.query("SELECT m.id, h.fichas_disponibles, h.dia_semana, h.hora_inicio, h.hora_final,m.especialidad, u.nombres,u.apellidos,u.correo,u.rol, s.codigo,s.nombre_servicio FROM horarios_medicos h INNER JOIN medicos m ON h.id_medico = m.id INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = ? AND h.id_medico = ? ORDER BY h.dia_semana ASC", [estado,id_medico]);
+        const [result] = await getConnection.query("SELECT m.id, h.fichas_disponibles, h.dia_semana, h.hora_inicio, h.hora_final,m.especialidad, u.nombres,u.apellidos,u.correo,u.rol, s.codigo,s.nombre_servicio FROM horarios_medicos h INNER JOIN medicos m ON h.id_medico = m.id INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = ? AND h.id_medico = ? ORDER BY h.dia_semana ASC", [estado, id_medico]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -232,6 +232,83 @@ const deleteCategorias = async (req, res) => {
     }
 }
 
+//FICHAJE
+
+const addFicha = async (req, res) => {
+    try {
+        const { id_paciente, id_medico, id_servicio, fecha } = req.body;
+
+        const estado_ficha = 'Pendiente'
+
+        const [existingEntry] = await getConnection.query(
+            'SELECT * FROM registro_fichas WHERE id_paciente = ? AND id_medico = ? AND id_servicio = ? AND estado_ficha = ?',
+            [id_paciente, id_medico, id_servicio, estado_ficha]
+        );
+
+        if (existingEntry.length > 0) {
+            return res.status(400).send('El paciente ya está registrado con el mismo médico y servicio.');
+        } else {
+            const [lastCodeResult] = await getConnection.query('SELECT codigo FROM registro_fichas WHERE fecha = ? ORDER BY codigo DESC LIMIT 1', fecha);
+
+            let newCode = 'FIC-001';
+
+            if (lastCodeResult.length > 0) {
+
+                let lastCode = lastCodeResult[0].codigo;
+                let lastNumber = parseInt(lastCode.replace('FIC-', ''));
+                let newNumber = lastNumber + 1;
+
+                let formattedNumber = ("000" + newNumber).slice(-3);
+                newCode = 'FIC-' + formattedNumber;
+            }
+
+            const fichasProps = { codigo: newCode, id_paciente, id_medico, id_servicio, fecha, 'estado_ficha': 'Pendiente', 'estado': true };
+            const [result] = await getConnection.query("INSERT INTO registro_fichas SET ?", fichasProps);
+
+            await getConnection.query("UPDATE horarios_medicos SET fichas_disponibles = fichas_disponibles - 1 WHERE id_medico = ?", [id_medico]);
+
+            res.json(result);
+        }
+    }
+    catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getPacienteID = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const estado = true;
+        const [result] = await getConnection.query("SELECT p.*, d.* FROM pacientes p INNER JOIN direccion d ON p.id_direccion = d.id WHERE p.estado = ? AND p.id = ?", [estado, id]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getFichas = async (req, res) => {
+    try {
+        const estado = true;
+        const { fecha } = req.params;
+        const [result] = await getConnection.query("SELECT f.*, p.nombres AS nombre_paciente, p.apellidos AS apellido_paciente, p.ci, p.sexo, p.fecha_nacimiento, u.nombres AS nombre_medico, u.apellidos AS apellido_medico, s.nombre_servicio FROM registro_fichas f INNER JOIN pacientes p ON f.id_paciente = p.id INNER JOIN medicos m ON f.id_medico = m.id INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON f.id_servicio = s.id WHERE f.estado = ? AND f.fecha = ? ORDER BY f.fecha_creacion DESC;", [estado, fecha]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const cancelarFicha = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const estado_ficha = 'Cancelado';
+        const [result] = await getConnection.query("UPDATE registro_fichas SET estado_ficha = ? WHERE id = ?", [estado_ficha, id]);
+        res.json(result);
+    }
+    catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 
 export const methods = {
     getServicios,
@@ -248,5 +325,9 @@ export const methods = {
     getServiciosID,
     getServiciosIDmedico,
     getMedicosID,
-    getPacientes
+    getPacientes,
+    addFicha,
+    getPacienteID,
+    getFichas,
+    cancelarFicha
 }
