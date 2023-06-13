@@ -12,6 +12,7 @@ const getPacientes = async (req, res) => {
 }
 
 
+
 const listarDirecciones = async (req, res) => {
     try {
         const estado = true;

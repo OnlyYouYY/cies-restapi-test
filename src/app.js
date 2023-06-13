@@ -30,5 +30,4 @@ app.use("/api/proveedores", fproveedoresRoutes);
 app.use("/api/reabastecer", freabastecimientoRoutes);
 app.use("/api/ventas", fventasRoutes);
 
-
 export default app;

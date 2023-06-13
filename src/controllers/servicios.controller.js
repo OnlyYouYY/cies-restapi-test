@@ -22,6 +22,15 @@ const getServicios = async (req, res) => {
         res.status(500).send(error.message);
     }
 }
+const getContarFichasMasSolicitadas = async (req, res) => {
+    try {
+        const estado = true;
+        const [result] = await getConnection.query("SELECT s.nombre_servicio,c.nombre_categoria,COUNT(*) as total_fichas FROM registro_fichas f INNER JOIN servicios s ON f.id_servicio = s.id INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE f.estado = ? GROUP BY s.nombre_servicio, c.nombre_categoria ORDER BY total_fichas DESC", estado);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
 
 const getServiciosID = async (req, res) => {
     try {
@@ -33,6 +42,49 @@ const getServiciosID = async (req, res) => {
         res.status(500).send(error.message);
     }
 }
+
+const getFichasServicio = async (req, res) => {
+    try {
+        const { id_categoria } = req.params;
+        const estado = true;
+        const [result] = await getConnection.query("SELECT s.nombre_servicio,COUNT(f.id) AS fichas_count FROM registro_fichas f INNER JOIN servicios s ON f.id_servicio = s.id INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? AND s.id_categoria = ? GROUP BY s.nombre_servicio;", [estado, id_categoria]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getFichasTotales = async (req, res) => {
+    try {
+        const estado = true;
+        const [result] = await getConnection.query("SELECT COUNT(f.id) AS fichas_totales FROM registro_fichas f WHERE f.estado = ?;", [estado]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getPacientesTotal = async (req, res) => {
+    try {
+        const estado = true;
+        const [result] = await getConnection.query("SELECT COUNT(id) AS pacientes_totales FROM pacientes WHERE estado = ?;", [estado]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getVentasPorMes = async (req, res) => {
+    try {
+        const estado = true;
+        const [result] = await getConnection.query("SELECT YEAR(fecha_venta) as Ano, MONTH(fecha_venta) as Mes, SUM(cantidad_vendida) as Ventas_Totales FROM inventario_ventas WHERE YEAR(fecha_venta) = 2023 AND estado = 1 GROUP BY YEAR(fecha_venta), MONTH(fecha_venta);", [estado]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+
 
 const getMedicosID = async (req, res) => {
     try {
@@ -297,6 +349,8 @@ const getFichas = async (req, res) => {
     }
 }
 
+
+
 const cancelarFicha = async (req, res) => {
     try {
         const { id } = req.params;
@@ -329,5 +383,10 @@ export const methods = {
     addFicha,
     getPacienteID,
     getFichas,
-    cancelarFicha
+    cancelarFicha,
+    getFichasServicio,
+    getContarFichasMasSolicitadas,
+    getFichasTotales,
+    getPacientesTotal,
+    getVentasPorMes,
 }

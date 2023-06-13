@@ -38,5 +38,13 @@ router.post("/registrarFicha", serviciosController.addFicha);
 //Cancelar ficha
 router.put("/cancelarFicha/:id", serviciosController.cancelarFicha);
 
+//Estadisticas
+router.get("/conteoFichasServicio/:id_categoria",serviciosController.getFichasServicio);
+router.get("/conteoFichasTotal",serviciosController.getContarFichasMasSolicitadas);
+router.get("/conteoFichasTotalTabla",serviciosController.getFichasTotales);
+router.get("/conteoPacientes",serviciosController.getPacientesTotal);
+router.get("/conteoVentasPorMes",serviciosController.getVentasPorMes);
+
+
 
 export default router;

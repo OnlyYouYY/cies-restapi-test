@@ -2,6 +2,7 @@ import { getConnection } from "./../database/database.js";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
+
 const saltRounds = 10;
 
 const generateToken = (userId) => {
@@ -9,7 +10,6 @@ const generateToken = (userId) => {
     return token;
 }
 
-//Busqueda
 const getUsuarios = async (req, res) => {
     try {
         const estado = true;
@@ -21,13 +21,43 @@ const getUsuarios = async (req, res) => {
     }
 }
 
-
-//Buscar un usuario a traves de su id
 const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         const [result] = await getConnection.query("SELECT * FROM usuarios WHERE id = ?", id);
         console.log(result);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getMedicos = async (req, res) => {
+    try {
+        const rol = 'medico';
+        const estado = true;
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE rol = ? AND estado = ?", [rol, estado]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getMedicoID = async (req, res) => {
+    try {
+        const id_usuario = req.params.id_usuario;
+        const estado = true;
+        const [result] = await getConnection.query("SELECT * FROM medicos WHERE id_usuario = ? AND estado = ?", [id_usuario, estado]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getHorariosMedicoID = async (req, res) => {
+    try {
+        const id_medico = req.params.id_medico;
+        const [result] = await getConnection.query("SELECT * FROM horarios_medicos WHERE id_medico = ? ORDER BY FIELD(dia_semana, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo')", id_medico);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -64,12 +94,51 @@ const loginUser = async (req, res) => {
 //Insercion
 const addUsuarios = async (req, res) => {
     try {
-        const { nombres, apellidos, correo, contrasenia, rol } = req.body;
+        const { nombres, apellidos, correo, contrasenia, rol, estadoMedico } = req.body;
 
         const hashedContrasenia = await bcrypt.hash(contrasenia, saltRounds);
 
-        const usuariosProps = { nombres, apellidos, correo, contrasenia: hashedContrasenia, rol, 'estado': true }
+        const usuariosProps = { nombres, apellidos, correo, contrasenia: hashedContrasenia, rol, 'imagen_perfil': null, estadoMedico, 'estado': true }
         const [result] = await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
+
+        res.json(result);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const addMedico = async (req, res) => {
+    try {
+        const { id_usuario, id_servicio, especialidad } = req.body;
+        const estadoMedico = 'Registrado';
+        const medicoProps = { id_usuario, id_servicio, especialidad, 'estado': true }
+
+        await getConnection.query("UPDATE usuarios SET estadoMedico = ?", estadoMedico);
+
+        const [result] = await getConnection.query("INSERT INTO medicos SET ?", medicoProps);
+
+        res.json(result);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const addHorarioMedico = async (req, res) => {
+    try {
+        const { id_medico, dia_semana, hora_inicio, hora_final, fichas_disponibles } = req.body;
+
+        const [existingRows] = await getConnection.query("SELECT * FROM horarios_medicos WHERE id_medico = ? AND dia_semana = ?", [id_medico, dia_semana]);
+
+        if (existingRows.length > 0) {
+            return res.status(400).send("Ya existe un horario para este médico en el mismo día.");
+        }
+
+        const horarioProps = { id_medico, dia_semana, hora_inicio, hora_final, fichas_disponibles }
+
+        const [result] = await getConnection.query("INSERT INTO horarios_medicos SET ?", horarioProps);
+
         res.json(result);
 
     } catch (error) {
@@ -86,7 +155,7 @@ const updateUsuario = async (req, res) => {
         const usuariosProps = { nombres, apellidos, correo, contrasenia, rol, 'estado': true }
 
         const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE id = ?", [usuariosProps, id]);
-        
+
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -107,24 +176,24 @@ const deleteUsuario = async (req, res) => {
     }
 }
 
-export const validarUsuarioExistente = async (req, res) => {
+const validarUsuarioExistente = async (req, res) => {
     const { correo, contrasenia } = req.body;
-  
+
     try {
-      const usuarioExistente = await Usuario.findOne({
-        correo,
-        contrasenia,
-      });
-  
-      if (usuarioExistente) {
-        return res.status(200).json({ existente: true });
-      } else {
-        return res.status(200).json({ existente: false });
-      }
+        const usuarioExistente = await Usuario.findOne({
+            correo,
+            contrasenia,
+        });
+
+        if (usuarioExistente) {
+            return res.status(200).json({ existente: true });
+        } else {
+            return res.status(200).json({ existente: false });
+        }
     } catch (error) {
-      return res.status(500).json({ error: "Error al verificar usuario existente" });
+        return res.status(500).json({ error: "Error al verificar usuario existente" });
     }
-  };
+};
 
 
 
@@ -135,5 +204,10 @@ export const methods = {
     deleteUsuario,
     updateUsuario,
     loginUser,
-    validarUsuarioExistente
+    validarUsuarioExistente,
+    getMedicos,
+    addMedico,
+    getMedicoID,
+    getHorariosMedicoID,
+    addHorarioMedico
 }
