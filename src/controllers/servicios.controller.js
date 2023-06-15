@@ -331,7 +331,7 @@ const getPacienteID = async (req, res) => {
     try {
         const { id } = req.params;
         const estado = true;
-        const [result] = await getConnection.query("SELECT p.*, d.* FROM pacientes p INNER JOIN direccion d ON p.id_direccion = d.id WHERE p.estado = ? AND p.id = ?", [estado, id]);
+        const [result] = await getConnection.query("SELECT * FROM pacientes WHERE estado = ? AND id = ?", [estado, id]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);

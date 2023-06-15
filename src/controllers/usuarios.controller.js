@@ -114,7 +114,7 @@ const addMedico = async (req, res) => {
         const estadoMedico = 'Registrado';
         const medicoProps = { id_usuario, id_servicio, especialidad, 'estado': true }
 
-        await getConnection.query("UPDATE usuarios SET estadoMedico = ?", estadoMedico);
+        await getConnection.query("UPDATE usuarios SET estadoMedico = ? WHERE id = ?", [estadoMedico, id_usuario]);
 
         const [result] = await getConnection.query("INSERT INTO medicos SET ?", medicoProps);
 

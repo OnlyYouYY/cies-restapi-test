@@ -3,7 +3,7 @@ import { getConnection } from "./../database/database.js";
 //Busqueda
 const getPacientes = async (req, res) => {
     try {
-        const [result] = await getConnection.query("SELECT p.*, DATE_FORMAT(p.fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento, d.calle, d.ciudad FROM pacientes p LEFT JOIN direccion d ON p.id = d.id WHERE p.estado = 1");
+        const [result] = await getConnection.query("SELECT *, DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento FROM pacientes WHERE estado = 1");
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -11,25 +11,64 @@ const getPacientes = async (req, res) => {
     }
 }
 
-
-
-const listarDirecciones = async (req, res) => {
-    try {
-        const estado = true;
-        const [result] = await getConnection.query("SELECT id, CONCAT('zona: ', zona, ', ', 'calle: ', calle, ', ', 'ciudad: ', ciudad, ', ','provincia: ', provincia) AS direccion FROM direccion WHERE estado = ? GROUP BY zona, calle", estado);
-        res.json(result);
-    } catch (error) {
-        res.status(500).send(error.message);
-    }
-}
 
 const getPaciente = async (req, res) => {
     try {
         const { id } = req.params;
-        const [result] = await getConnection.query("SELECT * FROM pacientes WHERE id = ?", id);
+        const [result] = await getConnection.query("SELECT * FROM pacientes WHERE estado = 1 AND id = ?", id);
         console.log(result);
         res.json(result);
     } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getHistoriaClinica = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await getConnection.query("SELECT * FROM historia_medica WHERE id_paciente = ?", id);
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'No existe historia clinica para el paciente con el id especificado' });
+        }
+
+        console.log(result);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getMedicoIDConsulta = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await getConnection.query("SELECT u.id AS idUsuario,m.id AS idMedico, m.especialidad, u.nombres,u.apellidos,u.correo,u.rol,u.estadoMedico,s.nombre_servicio FROM medicos m INNER JOIN usuarios u ON m.id_usuario = u.id INNER JOIN servicios s ON m.id_servicio = s.id WHERE m.estado = 1 AND u.id = ?", id);
+        console.log(result);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getFichasMedico = async (req, res) => {
+    try {
+        const estado = true;
+        const { fecha, id } = req.params;
+        const [result] = await getConnection.query("SELECT f.*, p.nombres AS nombre_paciente, p.apellidos AS apellido_paciente, p.ci, p.sexo, p.fecha_nacimiento FROM registro_fichas f INNER JOIN pacientes p ON f.id_paciente = p.id INNER JOIN medicos m ON f.id_medico = m.id INNER JOIN usuarios u ON m.id_usuario = u.id WHERE f.estado = ? AND f.fecha = ? AND u.id = ? ORDER BY f.fecha_creacion DESC;", [estado, fecha, id]);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const finalizarFicha = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const estado_ficha = 'Finalizado';
+        const [result] = await getConnection.query("UPDATE registro_fichas SET estado_ficha = ? WHERE id = ?", [estado_ficha, id]);
+        res.json(result);
+    }
+    catch (error) {
         res.status(500).send(error.message);
     }
 }
@@ -37,11 +76,24 @@ const getPaciente = async (req, res) => {
 //Insercion
 const addPaciente = async (req, res) => {
     try {
-        const { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, usuario,contrasenia } = req.body;
+        const { nombres, apellidos, ci, fecha_nacimiento, sexo, telefono, correo_electronico, pais, ciudad, provincia, zona, calle, usuario, contrasenia } = req.body;
 
-        const pacientesProps = { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, 'estado': true, usuario, contrasenia };
+        const pacientesProps = { nombres, apellidos, ci, fecha_nacimiento, sexo, telefono, correo_electronico, pais, ciudad, provincia, zona, calle, 'estado': true, usuario, contrasenia };
 
         const [result] = await getConnection.query("INSERT INTO pacientes SET ?", pacientesProps);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const addHistoriaMedica = async (req, res) => {
+    try {
+        const { id_paciente, motivo_consulta, enfermedad_actual, antecedentes, diagnostico_cie, diagnostico_medico, tratamiento, observaciones, presion_arterial, peso, talla, temperatura_corporal, frecuencia_respiratoria, frecuencia_cardiaca, saturacion_oxigeno, examen_fisico_general, examen_piel } = req.body;
+
+        const historiaClinicaProps = { id_paciente, motivo_consulta, enfermedad_actual, antecedentes, diagnostico_cie, diagnostico_medico, tratamiento, observaciones, presion_arterial, peso, talla, temperatura_corporal, frecuencia_respiratoria, frecuencia_cardiaca, saturacion_oxigeno, examen_fisico_general, examen_piel, 'estado': true };
+
+        const [result] = await getConnection.query("INSERT INTO historia_medica SET ?", historiaClinicaProps);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -52,7 +104,7 @@ const addPaciente = async (req, res) => {
 const updatePaciente = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, usuario, contrasenia} = req.body;
+        const { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, usuario, contrasenia } = req.body;
         const pacientesProps = { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, usuario, contrasenia, 'estado': true }
         const [result] = await getConnection.query("UPDATE pacientes SET ? WHERE id = ?", [pacientesProps, id]);
         res.json(result);
@@ -99,6 +151,10 @@ export const methods = {
     addPaciente,
     deletePaciente,
     updatePaciente,
-    listarDirecciones,
-    deletePacientes
+    deletePacientes,
+    getHistoriaClinica,
+    addHistoriaMedica,
+    getMedicoIDConsulta,
+    getFichasMedico,
+    finalizarFicha
 }
