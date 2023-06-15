@@ -13,7 +13,7 @@ const generateToken = (userId) => {
 const getUsuarios = async (req, res) => {
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE  estado = ? ", estado);
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE estado = ? ", estado);
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -25,6 +25,16 @@ const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         const [result] = await getConnection.query("SELECT * FROM usuarios WHERE id = ?", id);
+        console.log(result);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getUsuariosEstado = async (req, res) => {
+    try {
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE correo != ?", ['gtr010yam@gmail.com']);
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -96,6 +106,11 @@ const addUsuarios = async (req, res) => {
     try {
         const { nombres, apellidos, correo, contrasenia, rol, estadoMedico } = req.body;
 
+        const [existingUser] = await getConnection.query("SELECT * FROM usuarios WHERE correo = ?", correo);
+        if (existingUser.length > 0) {
+            return res.status(400).send('Este correo ya está en uso.');
+        }
+
         const hashedContrasenia = await bcrypt.hash(contrasenia, saltRounds);
 
         const usuariosProps = { nombres, apellidos, correo, contrasenia: hashedContrasenia, rol, 'imagen_perfil': null, estadoMedico, 'estado': true }
@@ -107,6 +122,7 @@ const addUsuarios = async (req, res) => {
         res.status(500).send(error.message);
     }
 }
+
 
 const addMedico = async (req, res) => {
     try {
@@ -162,6 +178,30 @@ const updateUsuario = async (req, res) => {
     }
 }
 
+const updateEstadoHabilitado = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const estado = true;
+        const [result] = await getConnection.query("UPDATE usuarios SET estado = ? WHERE id = ?", [estado, id]);
+
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const updateEstadoDeshabilitado = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const estado = false;
+        const [result] = await getConnection.query("UPDATE usuarios SET estado = ? WHERE id = ?", [estado, id]);
+
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 
 //Eliminacion
 const deleteUsuario = async (req, res) => {
@@ -209,5 +249,8 @@ export const methods = {
     addMedico,
     getMedicoID,
     getHorariosMedicoID,
-    addHorarioMedico
+    addHorarioMedico,
+    updateEstadoHabilitado,
+    updateEstadoDeshabilitado,
+    getUsuariosEstado
 }

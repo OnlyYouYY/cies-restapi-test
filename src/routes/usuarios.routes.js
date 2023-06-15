@@ -9,6 +9,7 @@ router.get("/medicos", usuariosController.getMedicos);
 router.get("/medicoID/:id_usuario", usuariosController.getMedicoID);
 router.get("/horariosID/:id_medico", usuariosController.getHorariosMedicoID);
 router.get("/usuario/:id", usuariosController.getUsuario);
+router.get("/usuariosEstado", usuariosController.getUsuariosEstado);
 
 
 //Inserciones
@@ -21,6 +22,8 @@ router.put("/delete/:id", usuariosController.deleteUsuario);
 
 //Actualizaciones
 router.put("/actualizar/:id", usuariosController.updateUsuario);
+router.put("/estadoHabilitado/:id", usuariosController.updateEstadoHabilitado);
+router.put("/estadoDeshabilitado/:id", usuariosController.updateEstadoDeshabilitado);
 
 //Login
 router.post("/login", usuariosController.loginUser);
