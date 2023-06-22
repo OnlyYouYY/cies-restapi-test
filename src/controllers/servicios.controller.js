@@ -1,5 +1,5 @@
 import { getConnection } from "./../database/database.js";
-import { uploadImageToStorage } from "../service/googleCloud.js";
+import { uploadImageToStorage, deleteImageFromStorage } from "../service/googleCloud.js";
 
 
 
@@ -36,7 +36,7 @@ const getServiciosID = async (req, res) => {
     try {
         const { id_categoria } = req.params;
         const estado = true;
-        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? AND s.id_categoria = ? ORDER BY s.fecha_creacion DESC;", [estado, id_categoria]);
+        const [result] = await getConnection.query("SELECT s.*, c.nombre_categoria FROM servicios s INNER JOIN categoria_servicios c ON s.id_categoria = c.id WHERE s.estado = ? AND s.id_categoria = ? AND s.estado_servicio = 'Habilitado' ORDER BY s.fecha_creacion DESC;", [estado, id_categoria]);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -139,7 +139,7 @@ const addServicio = async (req, res) => {
             newCode = 'SER-' + formattedNumber;
         }
 
-        const serviciosProps = { codigo: newCode, nombre_servicio, descripcion_servicio, id_categoria, ruta_imagen: imageUrl, 'estado_servicio': 'Pendiente', 'estado': true };
+        const serviciosProps = { codigo: newCode, nombre_servicio, descripcion_servicio, id_categoria, ruta_imagen: imageUrl, 'estado_servicio': 'Habilitado', 'estado': true };
         const [result] = await getConnection.query("INSERT INTO servicios SET ?", serviciosProps);
         res.json(result);
     }
@@ -190,14 +190,40 @@ const updateServicio = async (req, res) => {
     try {
         const { id } = req.params;
         const { nombre_servicio, descripcion_servicio, id_categoria } = req.body;
-        const serviciosProps = { nombre_servicio, descripcion_servicio, id_categoria };
+
+        const folder = 'servicios';
+
+        let imageUrl;
+
+        // Verifica si se proporcionó un archivo antes de intentar subirlo
+        if (req.file) {
+            // Obtén la url de la imagen anterior de la base de datos
+            const [oldImageResult] = await getConnection.query("SELECT ruta_imagen FROM servicios WHERE id = ?", [id]);
+            const oldImageUrl = oldImageResult[0].ruta_imagen;
+
+            // Borra la imagen anterior
+            await deleteImageFromStorage(oldImageUrl, folder);
+
+            // Sube la nueva imagen y obtén su url
+            imageUrl = await uploadImageToStorage(req.file, folder);
+        } else {
+            // Si no se proporcionó un archivo, usa la url de la imagen anterior
+            const [oldImageResult] = await getConnection.query("SELECT ruta_imagen FROM servicios WHERE id = ?", [id]);
+            imageUrl = oldImageResult[0].ruta_imagen;
+        }
+
+        const serviciosProps = { nombre_servicio, descripcion_servicio, id_categoria, ruta_imagen: imageUrl, 'estado_servicio': 'Habilitado', 'estado': true };
         const [result] = await getConnection.query("UPDATE servicios SET ? WHERE id = ?", [serviciosProps, id]);
+
         res.json(result);
     }
     catch (error) {
         res.status(500).send(error.message);
     }
 }
+
+
+
 
 const updateCategoria = async (req, res) => {
     try {
@@ -215,8 +241,8 @@ const updateCategoria = async (req, res) => {
 const estadoServicio = async (req, res) => {
     try {
         const { id } = req.params;
-        const { estado_servicio } = req.body;
-        const [result] = await getConnection.query("UPDATE servicios SET estado_servicio = ? WHERE id = ?", [estado_servicio, id]);
+        const estado = 'Habilitado';
+        const [result] = await getConnection.query("UPDATE servicios SET estado_servicio = ? WHERE id = ?", [estado, id]);
         res.json(result);
     }
     catch (error) {
@@ -228,8 +254,8 @@ const deleteServicio = async (req, res) => {
 
     try {
         const { id } = req.params;
-        const estado = false;
-        const [result] = await getConnection.query("UPDATE servicios SET estado = ? WHERE id = ?", [estado, id]);
+        const estado = 'Deshabilitado';
+        const [result] = await getConnection.query("UPDATE servicios SET estado_servicio = ? WHERE id = ?", [estado, id]);
         res.json(result);
     }
     catch (error) {
@@ -293,12 +319,12 @@ const addFicha = async (req, res) => {
         const estado_ficha = 'Pendiente'
 
         const [existingEntry] = await getConnection.query(
-            'SELECT * FROM registro_fichas WHERE id_paciente = ? AND id_medico = ? AND id_servicio = ? AND estado_ficha = ?',
-            [id_paciente, id_medico, id_servicio, estado_ficha]
+            'SELECT * FROM registro_fichas WHERE id_paciente = ? AND id_medico = ? AND id_servicio = ? AND estado_ficha = ? AND DATE(fecha) = DATE(?)',
+            [id_paciente, id_medico, id_servicio, estado_ficha, fecha]
         );
 
         if (existingEntry.length > 0) {
-            return res.status(400).send('El paciente ya está registrado con el mismo médico y servicio.');
+            return res.status(400).send('El paciente tiene una ficha pendiente el dia de hoy para el mismo servicio.');
         } else {
             const [lastCodeResult] = await getConnection.query('SELECT codigo FROM registro_fichas WHERE fecha = ? ORDER BY codigo DESC LIMIT 1', fecha);
 

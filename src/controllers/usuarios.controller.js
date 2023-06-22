@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { uploadImageToStorage, deleteImageFromStorage } from "../service/googleCloud.js";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
@@ -13,7 +14,7 @@ const generateToken = (userId) => {
 const getUsuarios = async (req, res) => {
     try {
         const estado = true;
-        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE estado = ? ", estado);
+        const [result] = await getConnection.query("SELECT * FROM usuarios WHERE estado = ? AND correo != ?", [estado,'gtr010yam@gmail.com']);
         console.log(result);
         res.json(result);
     } catch (error) {
@@ -101,7 +102,6 @@ const loginUser = async (req, res) => {
 
 
 
-//Insercion
 const addUsuarios = async (req, res) => {
     try {
         const { nombres, apellidos, correo, contrasenia, rol, estadoMedico } = req.body;
@@ -113,7 +113,7 @@ const addUsuarios = async (req, res) => {
 
         const hashedContrasenia = await bcrypt.hash(contrasenia, saltRounds);
 
-        const usuariosProps = { nombres, apellidos, correo, contrasenia: hashedContrasenia, rol, 'imagen_perfil': null, estadoMedico, 'estado': true }
+        const usuariosProps = { nombres, apellidos, correo, contrasenia: hashedContrasenia, rol, 'imagen_perfil': null, estadoMedico, 'estado': false }
         const [result] = await getConnection.query("INSERT INTO usuarios SET ?", usuariosProps);
 
         res.json(result);
@@ -166,9 +166,9 @@ const addHorarioMedico = async (req, res) => {
 const updateUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombres, apellidos, correo, contrasenia, rol } = req.body;
+        const { nombres, apellidos, correo } = req.body;
 
-        const usuariosProps = { nombres, apellidos, correo, contrasenia, rol, 'estado': true }
+        const usuariosProps = { nombres, apellidos, correo }
 
         const [result] = await getConnection.query("UPDATE usuarios SET ? WHERE id = ?", [usuariosProps, id]);
 
@@ -177,6 +177,34 @@ const updateUsuario = async (req, res) => {
         res.status(500).send(error.message);
     }
 }
+
+const updateImagenPerfil = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const folder = 'usuarios';
+        let imageUrl;
+
+        const [oldImageResult] = await getConnection.query("SELECT imagen_perfil FROM usuarios WHERE id = ?", [id]);
+        const oldImageUrl = oldImageResult[0].imagen_perfil;
+
+        if (req.file) {
+            if(oldImageUrl) {
+                await deleteImageFromStorage(oldImageUrl, folder);
+            }
+            imageUrl = await uploadImageToStorage(req.file, folder);
+        } else {
+            imageUrl = oldImageUrl;
+        }
+
+        const [result] = await getConnection.query("UPDATE usuarios SET imagen_perfil = ? WHERE id = ?", [imageUrl, id]);
+
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+
 
 const updateEstadoHabilitado = async (req, res) => {
     try {
@@ -252,5 +280,6 @@ export const methods = {
     addHorarioMedico,
     updateEstadoHabilitado,
     updateEstadoDeshabilitado,
-    getUsuariosEstado
+    getUsuariosEstado,
+    updateImagenPerfil
 }

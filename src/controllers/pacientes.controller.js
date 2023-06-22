@@ -4,7 +4,6 @@ import { getConnection } from "./../database/database.js";
 const getPacientes = async (req, res) => {
     try {
         const [result] = await getConnection.query("SELECT *, DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento FROM pacientes WHERE estado = 1");
-        console.log(result);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -16,7 +15,6 @@ const getPaciente = async (req, res) => {
     try {
         const { id } = req.params;
         const [result] = await getConnection.query("SELECT * FROM pacientes WHERE estado = 1 AND id = ?", id);
-        console.log(result);
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -29,10 +27,22 @@ const getHistoriaClinica = async (req, res) => {
         const [result] = await getConnection.query("SELECT * FROM historia_medica WHERE id_paciente = ?", id);
 
         if (result.length === 0) {
-            return res.status(404).json({ message: 'No existe historia clinica para el paciente con el id especificado' });
+            return res.status(404).json({ message: 'El paciente no tiene registrado su historia clinica.' });
         }
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
 
-        console.log(result);
+const getEvolucionPaciente = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await getConnection.query("SELECT * FROM evolucion_medica WHERE id_paciente = ?", id);
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'El paciente aun no tiene evoluciones.' });
+        }
         res.json(result);
     } catch (error) {
         res.status(500).send(error.message);
@@ -73,6 +83,31 @@ const finalizarFicha = async (req, res) => {
     }
 }
 
+const addEvolucionMedica = async (req, res) => {
+    try {
+        const { id, id_paciente, nota_evolucion, peso, altura, imc, tratamiento, fecha_evolucion } = req.body;
+        const estado_ficha = 'Finalizado';
+
+        const [existingEvolucion] = await getConnection.query("SELECT * FROM evolucion_medica WHERE id_paciente = ? AND fecha_evolucion = ?", [id_paciente, fecha_evolucion]);
+
+        if (existingEvolucion.length > 0) {
+            res.status(400).json({ message: 'Ya existe una evolución médica para este paciente en la fecha especificada' });
+            return;
+        }
+        await getConnection.query("UPDATE registro_fichas SET estado_ficha = ? WHERE id = ?", [estado_ficha, id]);
+
+        const evolucionProps = { id_paciente, nota_evolucion, peso, altura, imc, tratamiento, fecha_evolucion, estado: true };
+        const [result] = await getConnection.query("INSERT INTO evolucion_medica SET ?", evolucionProps);
+
+        res.json(result);
+    }
+    catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+
+
 //Insercion
 const addPaciente = async (req, res) => {
     try {
@@ -104,8 +139,8 @@ const addHistoriaMedica = async (req, res) => {
 const updatePaciente = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, usuario, contrasenia } = req.body;
-        const pacientesProps = { nombres, apellidos, fecha_nacimiento, sexo, telefono, correo_electronico, id_direccion, usuario, contrasenia, 'estado': true }
+        const { nombres, apellidos, ci, fecha_nacimiento, sexo, telefono, correo_electronico, pais, ciudad, provincia, zona, calle, usuario, contrasenia } = req.body;
+        const pacientesProps = { nombres, apellidos, ci, fecha_nacimiento, sexo, telefono, correo_electronico, pais, ciudad, provincia, zona, calle, usuario, contrasenia, 'estado': true }
         const [result] = await getConnection.query("UPDATE pacientes SET ? WHERE id = ?", [pacientesProps, id]);
         res.json(result);
     } catch (error) {
@@ -156,5 +191,7 @@ export const methods = {
     addHistoriaMedica,
     getMedicoIDConsulta,
     getFichasMedico,
-    finalizarFicha
+    finalizarFicha,
+    addEvolucionMedica,
+    getEvolucionPaciente
 }

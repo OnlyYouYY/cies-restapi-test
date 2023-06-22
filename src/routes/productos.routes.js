@@ -6,6 +6,7 @@ const router = Router();
 //fprodcuctos.controller.js
 //listar productos - categorias - proveedores
 router.get("/", productosController.listarProductosDisponibles);
+router.get("/no", productosController.listarProductosNoDisponibles);
 router.get("/categoriamed", productosController.listarProductosCategorias);
 router.get("/proveedoresmed", productosController.listarProveedoresproductos);
 
@@ -20,8 +21,9 @@ router.put("/modificar/:id", productosController.updateProductos);
 router.put("/eliminar/:id",productosController.deleteProducto);
 router.put("/eliminarProductos",productosController.deleteProductos);
 
-//insercion de categorias productos
-router.post("/addcateproductos", productosController.addProductosCategorias);
-//fprodcuctos.controller.js
+//regresar produtos a disponibles
+router.put("/regresar/:id",productosController.returnProducto);
+router.put("/regresarProductos" , productosController.returnProductos);
+
 
 export default router;

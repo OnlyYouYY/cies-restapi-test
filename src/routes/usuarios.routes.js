@@ -1,5 +1,6 @@
 import { Router, request } from "express";
 import { methods as usuariosController } from "./../controllers/usuarios.controller.js";
+import { multerUpload } from "../service/googleCloud.js";
 
 const router = Router();
 //Busquedas
@@ -24,6 +25,7 @@ router.put("/delete/:id", usuariosController.deleteUsuario);
 router.put("/actualizar/:id", usuariosController.updateUsuario);
 router.put("/estadoHabilitado/:id", usuariosController.updateEstadoHabilitado);
 router.put("/estadoDeshabilitado/:id", usuariosController.updateEstadoDeshabilitado);
+router.put("/actualizarImagenPerfil/:id", multerUpload.single('imagen'), usuariosController.updateImagenPerfil);
 
 //Login
 router.post("/login", usuariosController.loginUser);

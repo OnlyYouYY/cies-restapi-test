@@ -10,7 +10,7 @@ import fproductosRoutes from "./routes/productos.routes.js";
 import fproveedoresRoutes from "./routes/proveedores.routes.js";
 import fventasRoutes from "./routes/ventas.routes.js";
 import freabastecimientoRoutes from "./routes/reabastecimiento.routes.js";
-
+import reportesRoutes from "./routes/reportes.routes.js";
 
 const app = express();
 
@@ -29,5 +29,6 @@ app.use("/api/productos", fproductosRoutes);
 app.use("/api/proveedores", fproveedoresRoutes);
 app.use("/api/reabastecer", freabastecimientoRoutes);
 app.use("/api/ventas", fventasRoutes);
+app.use("/api/reportes", reportesRoutes);
 
 export default app;

@@ -20,9 +20,9 @@ router.post("/registrarCategoria", multerUpload.single('imagenCategoria'), servi
 
 
 //Actualizar
-router.put("/actualizar/:id", serviciosController.updateServicio);
+router.put("/actualizar/:id", multerUpload.single('imagen'), serviciosController.updateServicio);
 router.put("/actualizarCategoria/:id", serviciosController.updateCategoria);
-router.put("/estado/:id", serviciosController.estadoServicio);
+router.put("/estadoHabilitado/:id", serviciosController.estadoServicio);
 
 //Eliminar
 router.put("/eliminar/:id", serviciosController.deleteServicio);
